@@ -1,78 +1,155 @@
+import itertools
+from os import setgroups
+from typing import NoReturn
 from manim import *
-import numpy as np
 import math
 
-from typing_extensions import runtime
+from networkx.generators.classic import path_graph
 
-###scale the mobject first, then position it
+class Chessboard(VGroup):
+    def __init__(self, sq_size=0.5, board_dim=(8,8), colors=[LIGHT_GREY, DARK_GREY],**kwargs):
+        super().__init__(**kwargs)
+        self.sq_size = sq_size
+        self.board_dim = board_dim
+        nc, nr = board_dim
+        self.colors = colors
 
-class Lec1(Scene):
-	def construct(self):
+        square = Square(stroke_width=0,fill_opacity=1).scale(sq_size)
 
-		circ = Circle(stroke_color=YELLOW_D, fill_color=BLUE_A, radius=2, stroke_width=5, fill_opacity=0.8).to_edge(UL)
+        self.add(*[square.copy() for x in range(nc * nr)])
+        self.arrange_in_grid(nr, nc, buff=0.05)
 
-		eq1 = TexMobject("{x}^{2}+{y}^{2}={2}^{2}")
-		eq1.next_to(circ, DOWN, buff=0.5)
+        for i, j in itertools.product(range(nr), range(nc)):
+            color = colors[(i + j) % 2]
+            self[i * nc + j].set_color(color)
 
-		text = TextMobject("Mr ", "Schoen ", "Tutorials")
-		text[0].set_color(BLUE)
-		text[1].set_color(PINK)
-		text[2].set_color(GREEN)
+        self.center()
 
-		text.next_to(circ, RIGHT, buff=1)
+class Chess(Scene):
+    def construct(self):
 
-		und = Underline(text[2])
+        my_yellow = "#FFFF99"
 
-		num = TexMobject("\ln(2)").scale(2).next_to(text, DOWN, buff=0.1)
+        my_green = "#99FF99"
 
-		self.play(DrawBorderThenFill(circ))
-		self.play(Write(eq1))
-		self.play(Write(text), ShowCreation(und))
-		self.play(FadeIn(num))
-		self.play(FadeOut(text[0]))
-		self.play(eq1.animate.shift(RIGHT*4), run_time=5)
-		self.play(circ.animate.next_to(eq1, UP))
-		self.play(Transform(circ,num))
+        my_size = 0.41
 
-class Lec1_1(Scene):
-	def construct(self):
+        my_runtime = 0.7
 
-		line = DashedLine(config.frame_width/2*LEFT,config.frame_width/2*RIGHT)
+        my_pause = 0.2
 
-		text = TextMobject("This ", "number ", "is too good mate")
-		und = Underline(text[1]).set_color(YELLOW_D)
+        my_buff = 0.05
 
-		num = TexMobject("5").to_edge(DOWN)
-
-		self.play(ShowCreation(line))
-		self.play(Write(text),Write(num))
-
-class Lec1_3(Scene):
-	def construct(self):
-
-		line = DashedLine(config.frame_width/2*LEFT,config.frame_width/2*RIGHT)
-
-		self.add(line)
+        my_trans = my_size + my_buff * (1/2)
 
 
-class Lec2_1(Scene):
-	def construct(self):
+        c = Chessboard(sq_size=my_size, board_dim=(8,8))
+        c2 = c.copy()
 
-		c = Circle(
-			radius=1,
-			stroke_width=6,
-			stroke_color=YELLOW_D,
-			fill_color=BLUE_D,
-			fill_opacity=0.7,
-		).scale(2).to_edge(UL, buff=0.5)
+        
+		# Path for the SVG knight
 
-		eq = MathTex("\int \mathrm{e}^{-t^2} \, \mathrm{d}t=\sqrt{\pi}}").scale(1.8).next_to(c, RIGHT)
+        knight = SVGMobject("ADD_YOUR_PATH").rotate(TAU/2).scale(0.3).set_color(BLACK)
+        knight.move_to(c[34])
+        c[34].set_color(RED)
 
-		text = Tex("Where is the circle?").shift(DOWN * 2)
-		text2 = Text("Where is the circle?").shift(DOWN * 3)
+        knight2 = knight.copy().move_to(c[34])
 
-		self.play(DrawBorderThenFill(c))
-		self.play(Write(eq))
-		self.play(Write(text),Write(text2))
-		self.play(c.animate.scale(2), runtime=2)
-		self.wait(1)
+        fig_A_1 = VGroup(c[34],c[40],c[57],c[51])
+        fig_B_1 = VGroup(c[3],c[9],c[18],c[24])
+        fig_C_1 = VGroup(c[5],c[15],c[20],c[30])
+        fig_D_1 = VGroup(c[36],c[46],c[53],c[63])
+
+        move_order_A = (40,57,51,61,55,38,44,29,23,6,12,2,8,25,19)
+        move_order_B = (13,7,22,28,45,39,54,60,50,56,41,35,18,24,9,3)
+        move_order_C = (20,5,15,30,47,62,52,37,43,58,48,33,16,1,11,26)
+        move_order_D = (32,49,59,42,36,53,63,46,31,14,4,21,27,10,0,17)
+
+        self.add(c)
+        self.add(knight)
+
+        for k in move_order_A:
+            self.play(knight.animate.move_to(c[k]),c[k].animate.set_color(RED),run_time=my_runtime)
+
+        fig_A_1_cop = fig_A_1.copy()
+
+        self.play(fig_A_1_cop.animate.shift(RIGHT * 8 * my_trans))
+        self.wait(my_pause)
+
+        self.play(fig_A_1_cop.animate.shift(UP * 8 * my_trans))
+        self.wait(my_pause)
+
+        self.play(fig_A_1_cop.animate.shift(LEFT * 8 * my_trans))
+        self.wait(my_pause)
+
+        self.play(fig_A_1_cop.animate.shift(DOWN * 8 * my_trans))
+        self.wait(my_pause)
+
+        self.play(fig_A_1_cop.animate.shift(1.03 * LEFT * 8 * my_trans))
+        self.wait(my_pause)
+
+
+        for k in move_order_B:
+            self.play(knight.animate.move_to(c[k]),c[k].animate.set_color(my_green),run_time=my_runtime)
+
+        fig_B_1_cop = fig_B_1.copy()
+
+        self.play(fig_B_1_cop.animate.shift(DOWN * 8 * my_trans))
+        self.wait(my_pause)
+
+        self.play(fig_B_1_cop.animate.shift(RIGHT * 8 * my_trans))
+        self.wait(my_pause)
+
+        self.play(fig_B_1_cop.animate.shift(UP * 8 * my_trans))
+        self.wait(my_pause)
+
+        self.play(fig_B_1_cop.animate.shift(LEFT * 8 * my_trans))
+        self.wait(my_pause)
+
+        self.play(fig_B_1_cop.animate.shift(1.03 * LEFT * 8 * my_trans))
+        self.wait(my_pause)
+
+
+        for k in move_order_C:
+            self.play(knight.animate.move_to(c[k]),c[k].animate.set_color(BLUE),run_time=my_runtime)
+
+        fig_C_1_cop = fig_C_1.copy()
+
+        self.play(fig_C_1_cop.animate.shift(LEFT * 8 * my_trans))
+        self.wait(my_pause)
+
+        self.play(fig_C_1_cop.animate.shift(DOWN * 8 * my_trans))
+        self.wait(my_pause)
+
+        self.play(fig_C_1_cop.animate.shift(RIGHT * 8 * my_trans))
+        self.wait(my_pause)
+
+        self.play(fig_C_1_cop.animate.shift(UP * 8 * my_trans))
+        self.wait(my_pause)
+
+        self.play(fig_C_1_cop.animate.shift(1.03 * RIGHT * 8 * my_trans))
+        self.wait(my_pause)
+
+
+        for k in move_order_D:
+            self.play(knight.animate.move_to(c[k]),c[k].animate.set_color(my_yellow),run_time=my_runtime)
+
+        fig_D_1_cop = fig_D_1.copy()
+
+        self.play(fig_D_1_cop.animate.shift(LEFT * 8 * my_trans))
+        self.wait(my_pause)
+
+        self.play(fig_D_1_cop.animate.shift(UP * 8 * my_trans))
+        self.wait(my_pause)
+
+        self.play(fig_D_1_cop.animate.shift(RIGHT * 8 * my_trans))
+        self.wait(my_pause)
+
+        self.play(fig_D_1_cop.animate.shift(DOWN * 8 * my_trans))
+        self.wait(my_pause)
+
+        self.play(fig_D_1_cop.animate.shift(1.03 * RIGHT * 8 * my_trans))
+        self.wait(my_pause)
+
+        self.play(FadeOut(knight),FadeOut(fig_A_1_cop),FadeOut(fig_B_1_cop),FadeOut(fig_C_1_cop),FadeOut(fig_D_1_cop),FadeOut(c),FadeIn(c2),FadeIn(knight2))
+        
