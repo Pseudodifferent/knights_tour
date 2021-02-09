@@ -1,10 +1,6 @@
 import itertools
-from os import setgroups
-from typing import NoReturn
 from manim import *
 import math
-
-from networkx.generators.classic import path_graph
 
 class Chessboard(VGroup):
     def __init__(self, sq_size=0.5, board_dim=(8,8), colors=[LIGHT_GREY, DARK_GREY],**kwargs):
